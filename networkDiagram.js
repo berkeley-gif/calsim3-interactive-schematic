@@ -127,19 +127,19 @@ async function visualizeNetwork() {
       .attr('d', 'M0,-5L10,0L0,5')
       .attr('fill', '#555');
 
-    // Update link rendering to include arrow markers
+    // Update link rendering with adjusted stroke width and explicit opacity
     svg.selectAll('line')
       .data(links)
       .enter()
       .append('line')
-      .attr('stroke', d => d.color)
-      .attr('stroke-width', d => d.width)
+      .attr('stroke', d => d.color || '#555')
+      .attr('stroke-width', 2)
+      .attr('opacity', 1)
       .attr('x1', d => nodeById.get(d.sourceId).x + nodeById.get(d.sourceId).width / 2)
       .attr('y1', d => nodeById.get(d.sourceId).y + nodeById.get(d.sourceId).height / 2)
       .attr('x2', d => nodeById.get(d.targetId).x + nodeById.get(d.targetId).width / 2)
       .attr('y2', d => nodeById.get(d.targetId).y + nodeById.get(d.targetId).height / 2)
-      .attr('stroke', d => d.color)
-      .attr('marker-end', 'url(#end)');
+      .attr('marker-end', 'url(#arrow-end)');
 
     // Properly bind data to nodes for tooltip functionality
     const nodeSelection = svg.selectAll('.node')
@@ -252,6 +252,16 @@ async function visualizeNetwork() {
       .on('mouseout', () => {
         tooltip.transition().duration(500).style('opacity', 0);
       });
+
+    // Add detailed logging for specific problematic link
+    const problematicLink = links.find(l => l.sourceId === '1285' && l.targetId === '1827');
+    if (problematicLink) {
+      const sourceNode = nodeById.get(problematicLink.sourceId);
+      const targetNode = nodeById.get(problematicLink.targetId);
+      console.log(`Problematic link coordinates: source (${sourceNode.x}, ${sourceNode.y}), target (${targetNode.x}, ${targetNode.y})`);
+    } else {
+      console.warn('Problematic link between nodes 1285 and 1827 not found.');
+    }
 
   } catch (error) {
     console.error('Error visualizing network:', error);
