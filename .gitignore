@@ -1,0 +1,30 @@
+# Node.js dependencies
+node_modules/
+dist/
+.vite/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Editor/IDE files
+.vscode/
+.idea/
+*.sublime-workspace
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+pnpm-error.log*
+
+# macOS system files
+.DS_Store
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Optional: Ignore local development files
+*.local

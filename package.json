@@ -1,0 +1,23 @@
+{
+  "name": "calsim_schematic",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+"scripts": {
+  "dev": "vite",
+  "build": "vite build",
+  "preview": "vite preview"
+},
+  "author": "jfantauzza",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "d3": "^7.9.0",
+    "iconv-lite": "^0.6.3",
+    "jsdom": "^26.0.0",
+    "xml2js": "^0.6.2"
+  },
+  "devDependencies": {
+    "vite": "^6.2.1"
+  }
+}

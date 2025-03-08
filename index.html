@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CalSim3 Schematic</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        
+        h1 {
+            text-align: center;
+            margin: 10px 0;
+            padding: 0;
+            position: absolute;
+            top: 0;
+            width: 100%;
+            z-index: 10;
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+        
+        #network-container {
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        .status-message {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .error-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 0, 0, 0.2);
+            color: darkred;
+            padding: 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            max-width: 80%;
+        }
+        
+        .download-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>CalSim3 Schematic</h1>
+    <div id="network-container"></div>
+    
+    <!-- Import scripts with type="module" for Vite -->
+    <script type="module" src="/convertXmlToJson.js"></script>
+    <script type="module" src="/networkDiagram.js"></script>
+</body>
+</html>
