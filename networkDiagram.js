@@ -111,7 +111,23 @@ async function visualizeNetwork() {
       svgContainer.transition().call(zoom.scaleBy, 0.5);
     });
 
-    // Render links
+    // Define arrow markers for links
+    svg.append('defs').selectAll('marker')
+      .data(['end'])
+      .enter().append('marker')
+      .attr('id', String)
+      .attr('viewBox', '0 -5 10 10')
+      .attr('refX', 15)
+      .attr('refY', 0)
+      .attr('markerWidth', 6)
+      .attr('markerWidth', 6)
+      .attr('markerHeight', 6)
+      .attr('orient', 'auto')
+      .append('path')
+      .attr('d', 'M0,-5L10,0L0,5')
+      .attr('fill', '#555');
+
+    // Update link rendering to include arrow markers
     svg.selectAll('line')
       .data(links)
       .enter()
@@ -121,7 +137,9 @@ async function visualizeNetwork() {
       .attr('x1', d => nodeById.get(d.sourceId).x + nodeById.get(d.sourceId).width / 2)
       .attr('y1', d => nodeById.get(d.sourceId).y + nodeById.get(d.sourceId).height / 2)
       .attr('x2', d => nodeById.get(d.targetId).x + nodeById.get(d.targetId).width / 2)
-      .attr('y2', d => nodeById.get(d.targetId).y + nodeById.get(d.targetId).height / 2);
+      .attr('y2', d => nodeById.get(d.targetId).y + nodeById.get(d.targetId).height / 2)
+      .attr('stroke', d => d.color)
+      .attr('marker-end', 'url(#end)');
 
     // Properly bind data to nodes for tooltip functionality
     const nodeSelection = svg.selectAll('.node')
