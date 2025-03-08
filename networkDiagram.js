@@ -87,7 +87,7 @@ async function visualizeNetwork() {
 
     // Add zoom and pan functionality
     const zoom = d3.zoom()
-      .scaleExtent([0.1, 10])
+      .scaleExtent([0.1, 50])
       .on('zoom', (event) => {
         svg.attr('transform', event.transform);
       });
@@ -104,11 +104,11 @@ async function visualizeNetwork() {
     document.body.appendChild(zoomControls);
 
     d3.select('#zoom-in').on('click', () => {
-      svgContainer.transition().call(zoom.scaleBy, 1.2);
+      svgContainer.transition().call(zoom.scaleBy, 2);
     });
 
     d3.select('#zoom-out').on('click', () => {
-      svgContainer.transition().call(zoom.scaleBy, 0.8);
+      svgContainer.transition().call(zoom.scaleBy, 0.5);
     });
 
     // Render links
@@ -123,7 +123,7 @@ async function visualizeNetwork() {
       .attr('x2', d => nodeById.get(d.targetId).x + nodeById.get(d.targetId).width / 2)
       .attr('y2', d => nodeById.get(d.targetId).y + nodeById.get(d.targetId).height / 2);
 
-    // Render nodes based on shape type with styling
+    // Render nodes based on shape type with water system context colors
     nodes.forEach(node => {
       const originalNode = nodeArray.find(n => n.$.Id === node.id);
       const shapeType = originalNode?.Shape?.[0]?.$.Id;
@@ -136,6 +136,23 @@ async function visualizeNetwork() {
       switch (shapeType) {
         case 'Ellipse':
           fillColor = 'yellow';
+          break;
+
+        case 'Alternative':
+          fillColor = 'blue';
+          break;
+
+        case 'Cylinder':
+          fillColor = 'orange';
+          break;
+
+        default: // Rectangle
+          fillColor = '#69b3a2';
+      }
+
+      // Apply shape rendering with updated fill colors
+      switch (shapeType) {
+        case 'Ellipse':
           svg.append('ellipse')
             .attr('cx', node.x + node.width / 2)
             .attr('cy', node.y + node.height / 2)
@@ -148,7 +165,6 @@ async function visualizeNetwork() {
           break;
 
         case 'Alternative':
-          fillColor = 'blue';
           svg.append('polygon')
             .attr('points', `${node.x + node.width / 2},${node.y} ${node.x},${node.y + node.height} ${node.x + node.width},${node.y + node.height}`)
             .attr('fill', fillColor)
@@ -158,7 +174,6 @@ async function visualizeNetwork() {
           break;
 
         case 'Cylinder':
-          fillColor = 'white';
           svg.append('rect')
             .attr('x', node.x)
             .attr('y', node.y)
@@ -191,7 +206,6 @@ async function visualizeNetwork() {
           break;
 
         default: // Rectangle
-          fillColor = '#69b3a2';
           svg.append('rect')
             .attr('x', node.x)
             .attr('y', node.y)
