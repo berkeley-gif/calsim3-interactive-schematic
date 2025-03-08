@@ -123,8 +123,14 @@ async function visualizeNetwork() {
       .attr('x2', d => nodeById.get(d.targetId).x + nodeById.get(d.targetId).width / 2)
       .attr('y2', d => nodeById.get(d.targetId).y + nodeById.get(d.targetId).height / 2);
 
-    // Render nodes based on shape type with water system context colors
-    nodes.forEach(node => {
+    // Properly bind data to nodes for tooltip functionality
+    const nodeSelection = svg.selectAll('.node')
+      .data(nodes)
+      .enter()
+      .append('g')
+      .attr('class', 'node');
+
+    nodeSelection.each(function(node) {
       const originalNode = nodeArray.find(n => n.$.Id === node.id);
       const shapeType = originalNode?.Shape?.[0]?.$.Id;
       const pen = originalNode?.Pen?.[0];
@@ -134,43 +140,32 @@ async function visualizeNetwork() {
 
       let fillColor;
       switch (shapeType) {
-        case 'Ellipse':
-          fillColor = 'yellow';
-          break;
-
-        case 'Alternative':
-          fillColor = 'blue';
-          break;
-
-        case 'Cylinder':
-          fillColor = 'orange';
-          break;
-
-        default: // Rectangle
-          fillColor = '#69b3a2';
+        case 'Ellipse': fillColor = 'yellow'; break;
+        case 'Alternative': fillColor = 'blue'; break;
+        case 'Cylinder': fillColor = 'orange'; break;
+        default: fillColor = '#69b3a2';
       }
 
-      // Apply shape rendering with updated fill colors
       switch (shapeType) {
         case 'Ellipse':
           svg.append('ellipse')
+            .datum(node)
             .attr('cx', node.x + node.width / 2)
             .attr('cy', node.y + node.height / 2)
             .attr('rx', node.width / 2)
             .attr('ry', node.height / 2)
             .attr('fill', fillColor)
             .attr('stroke', strokeColor)
-            .attr('stroke-width', strokeWidth)
-            .attr('stroke-dasharray', dashStyle);
+            .attr('stroke-width', strokeWidth);
           break;
 
         case 'Alternative':
           svg.append('polygon')
+            .datum(node)
             .attr('points', `${node.x + node.width / 2},${node.y} ${node.x},${node.y + node.height} ${node.x + node.width},${node.y + node.height}`)
             .attr('fill', fillColor)
             .attr('stroke', strokeColor)
-            .attr('stroke-width', strokeWidth)
-            .attr('stroke-dasharray', dashStyle);
+            .attr('stroke-width', strokeWidth);
           break;
 
         case 'Cylinder':
@@ -183,29 +178,10 @@ async function visualizeNetwork() {
             .attr('ry', node.width / 4)
             .attr('fill', fillColor)
             .attr('stroke', strokeColor)
-            .attr('stroke-width', strokeWidth)
-            .attr('stroke-dasharray', dashStyle);
-          svg.append('ellipse')
-            .attr('cx', node.x + node.width / 2)
-            .attr('cy', node.y)
-            .attr('rx', node.width / 2)
-            .attr('ry', node.width / 4)
-            .attr('fill', fillColor)
-            .attr('stroke', strokeColor)
-            .attr('stroke-width', strokeWidth)
-            .attr('stroke-dasharray', dashStyle);
-          svg.append('ellipse')
-            .attr('cx', node.x + node.width / 2)
-            .attr('cy', node.y + node.height)
-            .attr('rx', node.width / 2)
-            .attr('ry', node.width / 4)
-            .attr('fill', fillColor)
-            .attr('stroke', strokeColor)
-            .attr('stroke-width', strokeWidth)
-            .attr('stroke-dasharray', dashStyle);
+            .attr('stroke-width', strokeWidth);
           break;
 
-        default: // Rectangle
+        default:
           svg.append('rect')
             .attr('x', node.x)
             .attr('y', node.y)
@@ -213,8 +189,7 @@ async function visualizeNetwork() {
             .attr('height', node.height)
             .attr('fill', fillColor)
             .attr('stroke', strokeColor)
-            .attr('stroke-width', strokeWidth)
-            .attr('stroke-dasharray', dashStyle);
+            .attr('stroke-width', strokeWidth);
       }
     });
 
@@ -236,6 +211,30 @@ async function visualizeNetwork() {
     status.textContent = `Rendered ${nodes.length} nodes and ${links.length} links`;
     document.body.appendChild(status);
     
+    // Add tooltip div
+    const tooltip = d3.select('body').append('div')
+      .attr('class', 'tooltip')
+      .style('position', 'absolute')
+      .style('opacity', 0)
+      .style('background-color', 'rgba(0,0,0,0.7)')
+      .style('color', '#fff')
+      .style('padding', '5px')
+      .style('border-radius', '5px')
+      .style('pointer-events', 'none');
+
+    // Properly bind data and add tooltip interaction to all node shapes
+    svg.selectAll('rect, ellipse, polygon')
+      .data(nodes)
+      .on('mouseover', (event, d) => {
+        tooltip.transition().duration(200).style('opacity', 0.9);
+        tooltip.html(`ID: ${d.id}<br>Label: ${d.label}<br>Position: (${d.x}, ${d.y})`)
+          .style('left', (event.pageX + 10) + 'px')
+          .style('top', (event.pageY - 28) + 'px');
+      })
+      .on('mouseout', () => {
+        tooltip.transition().duration(500).style('opacity', 0);
+      });
+
   } catch (error) {
     console.error('Error visualizing network:', error);
     // Display error on the page
