@@ -133,7 +133,7 @@ async function visualizeNetwork() {
       .data(links)
       .enter()
       .append('line')
-      .attr('stroke', d => d.color || '#555')
+      .attr('stroke', '#000')
       .attr('stroke-width', 50)
       .attr('opacity', 1)
       .attr('x1', d => nodeById.get(d.sourceId).x + nodeById.get(d.sourceId).width / 2)
