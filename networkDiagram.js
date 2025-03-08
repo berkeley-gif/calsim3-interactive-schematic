@@ -28,21 +28,40 @@ async function visualizeNetwork() {
 
     const nodeById = new Map(nodes.map(node => [node.id, node]));
 
-    const links = linkArray.map((l) => {
-      const sourceNode = nodeById.get(l.Origin?.[0]?.$.Id);
-      const targetNode = nodeById.get(l.Destination?.[0]?.$.Id);
+    const links = linkArray.map((l) => ({
+      sourceId: l.Origin?.[0]?.$.Id,
+      targetId: l.Destination?.[0]?.$.Id,
+      color: l.Pen?.[0]?.Color?.[0] ?? "#555",
+      width: 50
+    })).filter(l => nodeById.has(l.sourceId) && nodeById.has(l.targetId));
 
-      if (!sourceNode || !targetNode) {
-        console.warn(`Missing node for link: source ${l.Origin?.[0]?.$.Id}, target ${l.Destination?.[0]?.$.Id}`);
-      }
+    const linkedNodes = new Set(links.flatMap(l => [l.sourceId, l.targetId]));
+    const unlinkedNodes = nodes.filter(node => !linkedNodes.has(node.id));
 
-      return {
-        source: sourceNode,
-        target: targetNode,
-        color: l.Pen?.[0]?.Color?.[0] ?? "#555",
-        width: 50
-      };
-    }).filter(l => l.source && l.target);
+    if (unlinkedNodes.length > 0) {
+      console.warn('Nodes without links:', unlinkedNodes.map(node => node.id));
+
+      // Create a downloadable JSON file for unlinked nodes
+      const blob = new Blob([JSON.stringify(unlinkedNodes.map(node => node.id), null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+
+      const downloadLink = document.createElement('a');
+      downloadLink.href = url;
+      downloadLink.download = 'unlinkedNodes.json';
+      downloadLink.textContent = 'Download Unlinked Nodes JSON';
+      downloadLink.className = 'download-button';
+      document.body.appendChild(downloadLink);
+    }
+
+    // Check explicitly for links referencing nodes 147 and 148
+    const specificNodeIds = new Set(['147', '148']);
+    const specificLinks = linkArray.filter(l => specificNodeIds.has(l.Origin?.[0]?.$.Id) || specificNodeIds.has(l.Destination?.[0]?.$.Id));
+
+    if (specificLinks.length > 0) {
+      console.log('Links referencing nodes 147 or 148:', specificLinks);
+    } else {
+      console.warn('No links found referencing nodes 147 or 148.');
+    }
 
     const xExtent = d3.extent(nodes, d => d.x);
     const yExtent = d3.extent(nodes, d => d.y);
@@ -53,11 +72,20 @@ async function visualizeNetwork() {
     // Clear any existing SVG (useful for hot reloading)
     d3.select('#network-container').selectAll('svg').remove();
 
-    const svg = d3.select('#network-container')
+    // Add zoom and pan functionality
+    const zoom = d3.zoom()
+      .scaleExtent([0.1, 10])
+      .on('zoom', (event) => {
+        svg.attr('transform', event.transform);
+      });
+
+    const svgContainer = d3.select('#network-container')
       .append('svg')
       .attr('width', '100%')
       .attr('height', '100%')
-      .attr('viewBox', [xExtent[0] - 100, yExtent[0] - 100, width, height]);
+      .call(zoom);
+
+    const svg = svgContainer.append('g');
 
     const link = svg.selectAll('line')
       .data(links)
@@ -65,10 +93,10 @@ async function visualizeNetwork() {
       .append('line')
       .attr('stroke', d => d.color)
       .attr('stroke-width', d => d.width)
-      .attr('x1', d => d.source.x + d.source.width / 2)
-      .attr('y1', d => d.source.y + d.source.height / 2)
-      .attr('x2', d => d.target.x + d.target.width / 2)
-      .attr('y2', d => d.target.y + d.target.height / 2);
+      .attr('x1', d => nodeById.get(d.sourceId).x + nodeById.get(d.sourceId).width / 2)
+      .attr('y1', d => nodeById.get(d.sourceId).y + nodeById.get(d.sourceId).height / 2)
+      .attr('x2', d => nodeById.get(d.targetId).x + nodeById.get(d.targetId).width / 2)
+      .attr('y2', d => nodeById.get(d.targetId).y + nodeById.get(d.targetId).height / 2);
 
     const node = svg.selectAll('rect')
       .data(nodes)
