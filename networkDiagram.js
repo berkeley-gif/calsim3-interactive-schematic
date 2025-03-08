@@ -28,10 +28,20 @@ async function visualizeNetwork() {
 
     const nodeById = new Map(nodes.map(node => [node.id, node]));
 
+    // Function to convert ARGB to RGBA
+    function argbToRgba(argb) {
+      const alpha = parseInt(argb.slice(1, 3), 16) / 255;
+      const red = parseInt(argb.slice(3, 5), 16);
+      const green = parseInt(argb.slice(5, 7), 16);
+      const blue = parseInt(argb.slice(7, 9), 16);
+      return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+    }
+
+    // Update link color assignment to use the conversion function
     const links = linkArray.map((l) => ({
       sourceId: l.Origin?.[0]?.$.Id,
       targetId: l.Destination?.[0]?.$.Id,
-      color: l.Pen?.[0]?.Color?.[0] ?? "#555",
+      color: l.Pen?.[0]?.Color?.[0] ? argbToRgba(l.Pen[0].Color[0]) : "#555",
       width: 50
     })).filter(l => nodeById.has(l.sourceId) && nodeById.has(l.targetId));
 
@@ -133,7 +143,7 @@ async function visualizeNetwork() {
       .data(links)
       .enter()
       .append('line')
-      .attr('stroke', '#000')
+      .attr('stroke', d => d.color || '#555')
       .attr('stroke-width', 50)
       .attr('opacity', 1)
       .attr('x1', d => nodeById.get(d.sourceId).x + nodeById.get(d.sourceId).width / 2)
@@ -251,14 +261,12 @@ async function visualizeNetwork() {
         tooltip.transition().duration(500).style('opacity', 0);
       });
 
-    // Add detailed logging for specific problematic link
+    // Explicit logging for problematic link
     const problematicLink = links.find(l => l.sourceId === '1285' && l.targetId === '1827');
     if (problematicLink) {
       const sourceNode = nodeById.get(problematicLink.sourceId);
       const targetNode = nodeById.get(problematicLink.targetId);
-      console.log(`Problematic link coordinates: source (${sourceNode.x}, ${sourceNode.y}), target (${targetNode.x}, ${targetNode.y})`);
-    } else {
-      console.warn('Problematic link between nodes 1285 and 1827 not found.');
+      console.log(`Rendering problematic link: source (${sourceNode.x}, ${sourceNode.y}), target (${targetNode.x}, ${targetNode.y})`);
     }
 
     // Draw explicit arrowheads at midpoint of links after nodes with correct rotation
@@ -270,6 +278,24 @@ async function visualizeNetwork() {
       .append('path')
       .attr('class', 'arrowhead')
       .attr('d', 'M0,-2L4,0L0,2');
+
+    // Add detailed logging for link colors and coordinates
+    // links.forEach(link => {
+    //   const sourceNode = nodeById.get(link.sourceId);
+    //   const targetNode = nodeById.get(link.targetId);
+    //   console.log(`Link from ${link.sourceId} to ${link.targetId}: color=${link.color}, coordinates=(${sourceNode.x}, ${sourceNode.y}) to (${targetNode.x}, ${targetNode.y})`);
+    // });
+
+    // Log unique link colors and links without colors
+    const uniqueColors = new Set();
+    links.forEach(link => {
+      if (link.color) {
+        uniqueColors.add(link.color);
+      } else {
+        console.warn(`Link from ${link.sourceId} to ${link.targetId} has no color specified.`);
+      }
+    });
+    console.log('Unique link colors:', Array.from(uniqueColors));
 
   } catch (error) {
     console.error('Error visualizing network:', error);
