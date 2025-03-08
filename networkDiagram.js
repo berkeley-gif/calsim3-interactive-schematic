@@ -125,7 +125,7 @@ async function visualizeNetwork() {
       .attr('markerHeight', 6)
       .attr('orient', 'auto')
       .append('path')
-      .attr('d', 'M0,-5L10,0L0,5')
+      .attr('d', 'M0,-2L4,0L0,2')
       .attr('fill', '#555');
 
     // Render links with increased width and arrow markers
@@ -134,7 +134,7 @@ async function visualizeNetwork() {
       .enter()
       .append('line')
       .attr('stroke', d => d.color || '#555')
-      .attr('stroke-width', 5)
+      .attr('stroke-width', 50)
       .attr('opacity', 1)
       .attr('x1', d => nodeById.get(d.sourceId).x + nodeById.get(d.sourceId).width / 2)
       .attr('y1', d => nodeById.get(d.sourceId).y + nodeById.get(d.sourceId).height / 2)
@@ -269,16 +269,7 @@ async function visualizeNetwork() {
       .enter()
       .append('path')
       .attr('class', 'arrowhead')
-      .attr('d', 'M0,-5L10,0L0,5')
-      .attr('fill', '#555')
-      .attr('transform', d => {
-        const source = nodeById.get(d.sourceId);
-        const target = nodeById.get(d.targetId);
-        const midX = (source.x + source.width / 2 + target.x + target.width / 2) / 2;
-        const midY = (source.y + source.height / 2 + target.y + target.height / 2) / 2;
-        const angle = Math.atan2(target.y - source.y, target.x - source.x) * (180 / Math.PI);
-        return `translate(${midX}, ${midY}) rotate(${angle})`;
-      });
+      .attr('d', 'M0,-2L4,0L0,2');
 
   } catch (error) {
     console.error('Error visualizing network:', error);
