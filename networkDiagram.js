@@ -111,15 +111,16 @@ async function visualizeNetwork() {
       svgContainer.transition().call(zoom.scaleBy, 0.5);
     });
 
-    // Define arrow markers for links
-    svg.append('defs').selectAll('marker')
-      .data(['end'])
-      .enter().append('marker')
-      .attr('id', String)
+    // Explicitly reorder SVG groups for correct layering
+    const linkGroup = svg.append('g').attr('class', 'links');
+    const nodeGroup = svg.append('g').attr('class', 'nodes');
+
+    // Define arrow markers explicitly
+    svg.append('defs').append('marker')
+      .attr('id', 'end')
       .attr('viewBox', '0 -5 10 10')
       .attr('refX', 15)
       .attr('refY', 0)
-      .attr('markerWidth', 6)
       .attr('markerWidth', 6)
       .attr('markerHeight', 6)
       .attr('orient', 'auto')
@@ -127,99 +128,96 @@ async function visualizeNetwork() {
       .attr('d', 'M0,-5L10,0L0,5')
       .attr('fill', '#555');
 
-    // Update link rendering with adjusted stroke width and explicit opacity
-    svg.selectAll('line')
+    // Render links with increased width and arrow markers
+    linkGroup.selectAll('line')
       .data(links)
       .enter()
       .append('line')
       .attr('stroke', d => d.color || '#555')
-      .attr('stroke-width', 2)
+      .attr('stroke-width', 5)
       .attr('opacity', 1)
       .attr('x1', d => nodeById.get(d.sourceId).x + nodeById.get(d.sourceId).width / 2)
       .attr('y1', d => nodeById.get(d.sourceId).y + nodeById.get(d.sourceId).height / 2)
       .attr('x2', d => nodeById.get(d.targetId).x + nodeById.get(d.targetId).width / 2)
       .attr('y2', d => nodeById.get(d.targetId).y + nodeById.get(d.targetId).height / 2)
-      .attr('marker-end', 'url(#arrow-end)');
+      .attr('marker-end', 'url(#end)');
 
-    // Properly bind data to nodes for tooltip functionality
-    const nodeSelection = svg.selectAll('.node')
+    // Render nodes after links
+    nodeGroup.selectAll('.node')
       .data(nodes)
       .enter()
       .append('g')
       .attr('class', 'node');
 
-    nodeSelection.each(function(node) {
-      const originalNode = nodeArray.find(n => n.$.Id === node.id);
-      const shapeType = originalNode?.Shape?.[0]?.$.Id;
-      const pen = originalNode?.Pen?.[0];
-      const strokeColor = pen?.Color?.[0] ?? '#000';
-      const strokeWidth = parseFloat(pen?.Width?.[0]) || 2;
-      const dashStyle = pen?.DashStyle?.[0] === '0' ? 'none' : '5,5';
+    // Properly render nodes within nodeGroup
+    nodeGroup.selectAll('.node')
+      .each(function(node) {
+        const originalNode = nodeArray.find(n => n.$.Id === node.id);
+        const shapeType = originalNode?.Shape?.[0]?.$.Id;
+        const pen = originalNode?.Pen?.[0];
+        const strokeColor = pen?.Color?.[0] ?? '#000';
+        const strokeWidth = parseFloat(pen?.Width?.[0]) || 2;
 
-      let fillColor;
-      switch (shapeType) {
-        case 'Ellipse': fillColor = 'yellow'; break;
-        case 'Alternative': fillColor = 'blue'; break;
-        case 'Cylinder': fillColor = 'orange'; break;
-        default: fillColor = '#69b3a2';
-      }
+        let fillColor;
+        switch (shapeType) {
+          case 'Ellipse': fillColor = 'yellow'; break;
+          case 'Alternative': fillColor = 'blue'; break;
+          case 'Cylinder': fillColor = 'orange'; break;
+          default: fillColor = '#69b3a2';
+        }
 
-      switch (shapeType) {
-        case 'Ellipse':
-          svg.append('ellipse')
-            .datum(node)
-            .attr('cx', node.x + node.width / 2)
-            .attr('cy', node.y + node.height / 2)
-            .attr('rx', node.width / 2)
-            .attr('ry', node.height / 2)
-            .attr('fill', fillColor)
-            .attr('stroke', strokeColor)
-            .attr('stroke-width', strokeWidth);
-          break;
+        switch (shapeType) {
+          case 'Ellipse':
+            d3.select(this).append('ellipse')
+              .attr('cx', node.x + node.width / 2)
+              .attr('cy', node.y + node.height / 2)
+              .attr('rx', node.width / 2)
+              .attr('ry', node.height / 2)
+              .attr('fill', fillColor)
+              .attr('stroke', strokeColor)
+              .attr('stroke-width', strokeWidth);
+            break;
 
-        case 'Alternative':
-          svg.append('polygon')
-            .datum(node)
-            .attr('points', `${node.x + node.width / 2},${node.y} ${node.x},${node.y + node.height} ${node.x + node.width},${node.y + node.height}`)
-            .attr('fill', fillColor)
-            .attr('stroke', strokeColor)
-            .attr('stroke-width', strokeWidth);
-          break;
+          case 'Alternative':
+            d3.select(this).append('polygon')
+              .attr('points', `${node.x + node.width / 2},${node.y} ${node.x},${node.y + node.height} ${node.x + node.width},${node.y + node.height}`)
+              .attr('fill', fillColor)
+              .attr('stroke', strokeColor)
+              .attr('stroke-width', strokeWidth);
+            break;
 
-        case 'Cylinder':
-          svg.append('rect')
-            .attr('x', node.x)
-            .attr('y', node.y)
-            .attr('width', node.width)
-            .attr('height', node.height)
-            .attr('rx', node.width / 2)
-            .attr('ry', node.width / 4)
-            .attr('fill', fillColor)
-            .attr('stroke', strokeColor)
-            .attr('stroke-width', strokeWidth);
-          break;
+          case 'Cylinder':
+            d3.select(this).append('rect')
+              .attr('x', node.x)
+              .attr('y', node.y)
+              .attr('width', node.width)
+              .attr('height', node.height)
+              .attr('rx', node.width / 2)
+              .attr('ry', node.width / 4)
+              .attr('fill', fillColor)
+              .attr('stroke', strokeColor)
+              .attr('stroke-width', strokeWidth);
+            break;
 
-        default:
-          svg.append('rect')
-            .attr('x', node.x)
-            .attr('y', node.y)
-            .attr('width', node.width)
-            .attr('height', node.height)
-            .attr('fill', fillColor)
-            .attr('stroke', strokeColor)
-            .attr('stroke-width', strokeWidth);
-      }
-    });
+          default:
+            d3.select(this).append('rect')
+              .attr('x', node.x)
+              .attr('y', node.y)
+              .attr('width', node.width)
+              .attr('height', node.height)
+              .attr('fill', fillColor)
+              .attr('stroke', strokeColor)
+              .attr('stroke-width', strokeWidth);
+        }
 
-    // Render labels
-    svg.selectAll('text')
-      .data(nodes)
-      .enter().append('text')
-      .attr('x', d => d.x + d.width / 2)
-      .attr('y', d => d.y + d.height / 2)
-      .attr('text-anchor', 'middle')
-      .attr('alignment-baseline', 'middle')
-      .text(d => d.label);
+        // Append labels
+        d3.select(this).append('text')
+          .attr('x', node.x + node.width / 2)
+          .attr('y', node.y + node.height / 2)
+          .attr('text-anchor', 'middle')
+          .attr('alignment-baseline', 'middle')
+          .text(node.label);
+      });
 
     console.log("Static network visualization rendered successfully!");
     
@@ -241,7 +239,7 @@ async function visualizeNetwork() {
       .style('pointer-events', 'none');
 
     // Properly bind data and add tooltip interaction to all node shapes
-    svg.selectAll('rect, ellipse, polygon')
+    nodeGroup.selectAll('rect, ellipse, polygon')
       .data(nodes)
       .on('mouseover', (event, d) => {
         tooltip.transition().duration(200).style('opacity', 0.9);
