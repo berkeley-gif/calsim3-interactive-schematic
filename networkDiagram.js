@@ -3,7 +3,6 @@ import * as d3 from 'd3';
 // Visualize the network schematic using D3
 async function visualizeNetwork() {
   try {
-    // Load the JSON data using fetch instead of fs
     const response = await fetch('/data/json/networkSchematic.json');
     const data = await response.json();
     
@@ -19,20 +18,31 @@ async function visualizeNetwork() {
       return {
         id: n.$.Id,
         label: n.Text?.[0] ?? "",
-        x: parseFloat(bounds[0]),
-        y: parseFloat(bounds[1]),
-        width: parseFloat(bounds[2]),
-        height: parseFloat(bounds[3]),
+        x: bounds[0],
+        y: bounds[1],
+        width: bounds[2],
+        height: bounds[3],
         visible: n.Visible?.[0] === "true"
       };
     });
 
-    const links = linkArray.map((l) => ({
-      source: l.Origin?.[0]?.$.Id,
-      target: l.Destination?.[0]?.$.Id,
-      color: l.Pen?.[0]?.Color?.[0] ?? "#999",
-      width: parseFloat(l.Pen?.[0]?.Width?.[0]) || 2
-    }));
+    const nodeById = new Map(nodes.map(node => [node.id, node]));
+
+    const links = linkArray.map((l) => {
+      const sourceNode = nodeById.get(l.Origin?.[0]?.$.Id);
+      const targetNode = nodeById.get(l.Destination?.[0]?.$.Id);
+
+      if (!sourceNode || !targetNode) {
+        console.warn(`Missing node for link: source ${l.Origin?.[0]?.$.Id}, target ${l.Destination?.[0]?.$.Id}`);
+      }
+
+      return {
+        source: sourceNode,
+        target: targetNode,
+        color: l.Pen?.[0]?.Color?.[0] ?? "#555",
+        width: 50
+      };
+    }).filter(l => l.source && l.target);
 
     const xExtent = d3.extent(nodes, d => d.x);
     const yExtent = d3.extent(nodes, d => d.y);
@@ -55,10 +65,10 @@ async function visualizeNetwork() {
       .append('line')
       .attr('stroke', d => d.color)
       .attr('stroke-width', d => d.width)
-      .attr('x1', d => nodes.find(n => n.id === d.source).x)
-      .attr('y1', d => nodes.find(n => d.source).y)
-      .attr('x2', d => nodes.find(n => n.id === d.target).x)
-      .attr('y2', d => nodes.find(n => n.id === d.target).y);
+      .attr('x1', d => d.source.x + d.source.width / 2)
+      .attr('y1', d => d.source.y + d.source.height / 2)
+      .attr('x2', d => d.target.x + d.target.width / 2)
+      .attr('y2', d => d.target.y + d.target.height / 2);
 
     const node = svg.selectAll('rect')
       .data(nodes)
