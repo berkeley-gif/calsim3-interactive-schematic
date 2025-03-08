@@ -297,6 +297,17 @@ async function visualizeNetwork() {
     });
     console.log('Unique link colors:', Array.from(uniqueColors));
 
+    // Add interactive node highlighting
+    nodeGroup.selectAll('.node')
+      .on('mouseover', (event, hoveredNode) => {
+        linkGroup.selectAll('line').attr('opacity', link => (link.sourceId === hoveredNode.id || link.targetId === hoveredNode.id) ? 1 : 0.1);
+        nodeGroup.selectAll('.node').attr('opacity', node => (node.id === hoveredNode.id || links.some(link => (link.sourceId === hoveredNode.id && link.targetId === node.id) || (link.targetId === hoveredNode.id && link.sourceId === node.id))) ? 1 : 0.1);
+      })
+      .on('mouseout', () => {
+        linkGroup.selectAll('line').attr('opacity', 1);
+        nodeGroup.selectAll('.node').attr('opacity', 1);
+      });
+
   } catch (error) {
     console.error('Error visualizing network:', error);
     // Display error on the page
