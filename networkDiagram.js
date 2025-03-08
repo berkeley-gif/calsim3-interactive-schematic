@@ -63,14 +63,27 @@ async function visualizeNetwork() {
       console.warn('No links found referencing nodes 147 or 148.');
     }
 
+    // Log all unique shape types
+    const shapeTypes = new Set(nodeArray.map(n => n.Shape?.[0]?.$.Id).filter(Boolean));
+    console.log('Unique shape types:', Array.from(shapeTypes));
+
+    // Explicitly set SVG viewBox to ensure visibility
+    const padding = 200;
     const xExtent = d3.extent(nodes, d => d.x);
     const yExtent = d3.extent(nodes, d => d.y);
 
-    const width = xExtent[1] - xExtent[0] + 200;
-    const height = yExtent[1] - yExtent[0] + 200;
+    const svgWidth = xExtent[1] - xExtent[0] + 2 * padding;
+    const svgHeight = yExtent[1] - yExtent[0] + 2 * padding;
 
-    // Clear any existing SVG (useful for hot reloading)
     d3.select('#network-container').selectAll('svg').remove();
+
+    const svgContainer = d3.select('#network-container')
+      .append('svg')
+      .attr('width', '100%')
+      .attr('height', '100%')
+      .attr('viewBox', [xExtent[0] - padding, yExtent[0] - padding, svgWidth, svgHeight]);
+
+    const svg = svgContainer.append('g');
 
     // Add zoom and pan functionality
     const zoom = d3.zoom()
@@ -79,15 +92,27 @@ async function visualizeNetwork() {
         svg.attr('transform', event.transform);
       });
 
-    const svgContainer = d3.select('#network-container')
-      .append('svg')
-      .attr('width', '100%')
-      .attr('height', '100%')
-      .call(zoom);
+    svgContainer.call(zoom);
 
-    const svg = svgContainer.append('g');
+    // Add zoom controls
+    const zoomControls = document.createElement('div');
+    zoomControls.className = 'zoom-controls';
+    zoomControls.innerHTML = `
+      <button id="zoom-in">Zoom In</button>
+      <button id="zoom-out">Zoom Out</button>
+    `;
+    document.body.appendChild(zoomControls);
 
-    const link = svg.selectAll('line')
+    d3.select('#zoom-in').on('click', () => {
+      svgContainer.transition().call(zoom.scaleBy, 1.2);
+    });
+
+    d3.select('#zoom-out').on('click', () => {
+      svgContainer.transition().call(zoom.scaleBy, 0.8);
+    });
+
+    // Render links
+    svg.selectAll('line')
       .data(links)
       .enter()
       .append('line')
@@ -98,17 +123,89 @@ async function visualizeNetwork() {
       .attr('x2', d => nodeById.get(d.targetId).x + nodeById.get(d.targetId).width / 2)
       .attr('y2', d => nodeById.get(d.targetId).y + nodeById.get(d.targetId).height / 2);
 
-    const node = svg.selectAll('rect')
-      .data(nodes)
-      .enter()
-      .append('rect')
-      .attr('x', d => d.x)
-      .attr('y', d => d.y)
-      .attr('width', d => d.width)
-      .attr('height', d => d.height)
-      .attr('fill', '#69b3a2');
+    // Render nodes based on shape type with styling
+    nodes.forEach(node => {
+      const originalNode = nodeArray.find(n => n.$.Id === node.id);
+      const shapeType = originalNode?.Shape?.[0]?.$.Id;
+      const pen = originalNode?.Pen?.[0];
+      const strokeColor = pen?.Color?.[0] ?? '#000';
+      const strokeWidth = parseFloat(pen?.Width?.[0]) || 2;
+      const dashStyle = pen?.DashStyle?.[0] === '0' ? 'none' : '5,5';
 
-    const labels = svg.selectAll('text')
+      let fillColor;
+      switch (shapeType) {
+        case 'Ellipse':
+          fillColor = 'yellow';
+          svg.append('ellipse')
+            .attr('cx', node.x + node.width / 2)
+            .attr('cy', node.y + node.height / 2)
+            .attr('rx', node.width / 2)
+            .attr('ry', node.height / 2)
+            .attr('fill', fillColor)
+            .attr('stroke', strokeColor)
+            .attr('stroke-width', strokeWidth)
+            .attr('stroke-dasharray', dashStyle);
+          break;
+
+        case 'Alternative':
+          fillColor = 'blue';
+          svg.append('polygon')
+            .attr('points', `${node.x + node.width / 2},${node.y} ${node.x},${node.y + node.height} ${node.x + node.width},${node.y + node.height}`)
+            .attr('fill', fillColor)
+            .attr('stroke', strokeColor)
+            .attr('stroke-width', strokeWidth)
+            .attr('stroke-dasharray', dashStyle);
+          break;
+
+        case 'Cylinder':
+          fillColor = 'white';
+          svg.append('rect')
+            .attr('x', node.x)
+            .attr('y', node.y)
+            .attr('width', node.width)
+            .attr('height', node.height)
+            .attr('rx', node.width / 2)
+            .attr('ry', node.width / 4)
+            .attr('fill', fillColor)
+            .attr('stroke', strokeColor)
+            .attr('stroke-width', strokeWidth)
+            .attr('stroke-dasharray', dashStyle);
+          svg.append('ellipse')
+            .attr('cx', node.x + node.width / 2)
+            .attr('cy', node.y)
+            .attr('rx', node.width / 2)
+            .attr('ry', node.width / 4)
+            .attr('fill', fillColor)
+            .attr('stroke', strokeColor)
+            .attr('stroke-width', strokeWidth)
+            .attr('stroke-dasharray', dashStyle);
+          svg.append('ellipse')
+            .attr('cx', node.x + node.width / 2)
+            .attr('cy', node.y + node.height)
+            .attr('rx', node.width / 2)
+            .attr('ry', node.width / 4)
+            .attr('fill', fillColor)
+            .attr('stroke', strokeColor)
+            .attr('stroke-width', strokeWidth)
+            .attr('stroke-dasharray', dashStyle);
+          break;
+
+        default: // Rectangle
+          fillColor = '#69b3a2';
+          svg.append('rect')
+            .attr('x', node.x)
+            .attr('y', node.y)
+            .attr('width', node.width)
+            .attr('height', node.height)
+            .attr('fill', fillColor)
+            .attr('stroke', strokeColor)
+            .attr('stroke-width', strokeWidth)
+            .attr('stroke-dasharray', dashStyle);
+      }
+    });
+
+    // Render labels
+    svg.selectAll('text')
       .data(nodes)
       .enter().append('text')
       .attr('x', d => d.x + d.width / 2)
