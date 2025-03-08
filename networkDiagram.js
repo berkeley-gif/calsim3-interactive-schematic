@@ -261,6 +261,25 @@ async function visualizeNetwork() {
       console.warn('Problematic link between nodes 1285 and 1827 not found.');
     }
 
+    // Draw explicit arrowheads at midpoint of links after nodes with correct rotation
+    svg.selectAll('.arrowhead').remove();
+
+    svg.selectAll('.arrowhead')
+      .data(links)
+      .enter()
+      .append('path')
+      .attr('class', 'arrowhead')
+      .attr('d', 'M0,-5L10,0L0,5')
+      .attr('fill', '#555')
+      .attr('transform', d => {
+        const source = nodeById.get(d.sourceId);
+        const target = nodeById.get(d.targetId);
+        const midX = (source.x + source.width / 2 + target.x + target.width / 2) / 2;
+        const midY = (source.y + source.height / 2 + target.y + target.height / 2) / 2;
+        const angle = Math.atan2(target.y - source.y, target.x - source.x) * (180 / Math.PI);
+        return `translate(${midX}, ${midY}) rotate(${angle})`;
+      });
+
   } catch (error) {
     console.error('Error visualizing network:', error);
     // Display error on the page
