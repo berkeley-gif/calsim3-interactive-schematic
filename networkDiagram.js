@@ -310,11 +310,41 @@ async function visualizeNetwork() {
     });
     console.log('Unique link colors:', Array.from(uniqueColors));
 
-    // Add interactive node highlighting
+    // Function to find all upstream nodes with logging
+    function findUpstreamNodes(nodeId, links, visited = new Set()) {
+      if (visited.has(nodeId)) return visited;
+      visited.add(nodeId);
+      console.log(`Visiting upstream node: ${nodeId}`);
+      links.forEach(link => {
+        if (link.targetId === nodeId) {
+          findUpstreamNodes(link.sourceId, links, visited);
+        }
+      });
+      return visited;
+    }
+
+    // Function to find all downstream nodes with logging
+    function findDownstreamNodes(nodeId, links, visited = new Set()) {
+      if (visited.has(nodeId)) return visited;
+      visited.add(nodeId);
+      console.log(`Visiting downstream node: ${nodeId}`);
+      links.forEach(link => {
+        if (link.sourceId === nodeId) {
+          findDownstreamNodes(link.targetId, links, visited);
+        }
+      });
+      return visited;
+    }
+
+    // Enhanced interactive node highlighting
     nodeGroup.selectAll('.node')
       .on('mouseover', (event, hoveredNode) => {
-        linkGroup.selectAll('line').attr('opacity', link => (link.sourceId === hoveredNode.id || link.targetId === hoveredNode.id) ? 1 : 0.1);
-        nodeGroup.selectAll('.node').attr('opacity', node => (node.id === hoveredNode.id || visibleLinks.some(link => (link.sourceId === hoveredNode.id && link.targetId === node.id) || (link.targetId === hoveredNode.id && link.sourceId === node.id))) ? 1 : 0.1);
+        const upstreamNodes = findUpstreamNodes(hoveredNode.id, visibleLinks);
+        const downstreamNodes = findDownstreamNodes(hoveredNode.id, visibleLinks);
+        const allConnectedNodes = new Set([...upstreamNodes, ...downstreamNodes]);
+
+        linkGroup.selectAll('line').attr('opacity', link => (allConnectedNodes.has(link.sourceId) && allConnectedNodes.has(link.targetId)) ? 1 : 0.1);
+        nodeGroup.selectAll('.node').attr('opacity', node => allConnectedNodes.has(node.id) ? 1 : 0.1);
       })
       .on('mouseout', () => {
         linkGroup.selectAll('line').attr('opacity', 1);
