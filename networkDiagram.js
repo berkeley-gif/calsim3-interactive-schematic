@@ -308,6 +308,37 @@ async function visualizeNetwork() {
         nodeGroup.selectAll('.node').attr('opacity', 1);
       });
 
+    // Position search container below zoom controls
+    const searchContainer = d3.select('body').append('div')
+      .attr('class', 'search-container')
+      .style('position', 'absolute')
+      .style('top', '120px') // Adjusted position below zoom controls
+      .style('left', '20px')
+      .style('background-color', 'rgba(255, 255, 255, 0.9)')
+      .style('padding', '10px')
+      .style('border-radius', '5px')
+      .style('box-shadow', '0 2px 5px rgba(0,0,0,0.3)');
+
+    searchContainer.html('<input type="text" id="search-box" placeholder="Search nodes..."> <button id="reset-search">Reset</button>');
+
+    // Search functionality
+    d3.select('#search-box').on('input', function() {
+      const query = this.value.toLowerCase();
+      nodeGroup.selectAll('.node').attr('opacity', node => node.label.toLowerCase().includes(query) || node.id.includes(query) ? 1 : 0.1);
+      linkGroup.selectAll('line').attr('opacity', link => {
+        const sourceMatch = nodeById.get(link.sourceId).label.toLowerCase().includes(query) || link.sourceId.includes(query);
+        const targetMatch = nodeById.get(link.targetId).label.toLowerCase().includes(query) || link.targetId.includes(query);
+        return sourceMatch || targetMatch ? 1 : 0.1;
+      });
+    });
+
+    // Reset search functionality
+    d3.select('#reset-search').on('click', () => {
+      d3.select('#search-box').property('value', '');
+      nodeGroup.selectAll('.node').attr('opacity', 1);
+      linkGroup.selectAll('line').attr('opacity', 1);
+    });
+
   } catch (error) {
     console.error('Error visualizing network:', error);
     // Display error on the page
