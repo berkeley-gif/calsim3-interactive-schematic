@@ -95,12 +95,25 @@ async function visualizeNetwork() {
 
     const svg = svgContainer.append('g');
 
-    // Add zoom and pan functionality
+    // Limit rendering to visible nodes and links
+    const visibleNodes = nodes.filter(node => node.visible);
+    const visibleNodeIds = new Set(visibleNodes.map(node => node.id));
+    const visibleLinks = links.filter(link => visibleNodeIds.has(link.sourceId) && visibleNodeIds.has(link.targetId));
+
+    // Debounce zoom interactions
+    const debounce = (func, wait) => {
+      let timeout;
+      return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+      };
+    };
+
     const zoom = d3.zoom()
       .scaleExtent([0.1, 50])
-      .on('zoom', (event) => {
+      .on('zoom', debounce((event) => {
         svg.attr('transform', event.transform);
-      });
+      }, 50));
 
     svgContainer.call(zoom);
 
@@ -140,7 +153,7 @@ async function visualizeNetwork() {
 
     // Render links with increased width and arrow markers
     linkGroup.selectAll('line')
-      .data(links)
+      .data(visibleLinks)
       .enter()
       .append('line')
       .attr('stroke', d => d.color || '#555')
@@ -154,7 +167,7 @@ async function visualizeNetwork() {
 
     // Render nodes after links
     nodeGroup.selectAll('.node')
-      .data(nodes)
+      .data(visibleNodes)
       .enter()
       .append('g')
       .attr('class', 'node');
@@ -234,7 +247,7 @@ async function visualizeNetwork() {
     // Add a status message to the page
     const status = document.createElement('div');
     status.className = 'status-message';
-    status.textContent = `Rendered ${nodes.length} nodes and ${links.length} links`;
+    status.textContent = `Rendered ${visibleNodes.length} nodes and ${visibleLinks.length} links`;
     document.body.appendChild(status);
     
     // Add tooltip div
@@ -250,7 +263,7 @@ async function visualizeNetwork() {
 
     // Properly bind data and add tooltip interaction to all node shapes
     nodeGroup.selectAll('rect, ellipse, polygon')
-      .data(nodes)
+      .data(visibleNodes)
       .on('mouseover', (event, d) => {
         tooltip.transition().duration(200).style('opacity', 0.9);
         tooltip.html(`ID: ${d.id}<br>Label: ${d.label}<br>Position: (${d.x}, ${d.y})`)
@@ -262,7 +275,7 @@ async function visualizeNetwork() {
       });
 
     // Explicit logging for problematic link
-    const problematicLink = links.find(l => l.sourceId === '1285' && l.targetId === '1827');
+    const problematicLink = visibleLinks.find(l => l.sourceId === '1285' && l.targetId === '1827');
     if (problematicLink) {
       const sourceNode = nodeById.get(problematicLink.sourceId);
       const targetNode = nodeById.get(problematicLink.targetId);
@@ -273,14 +286,14 @@ async function visualizeNetwork() {
     svg.selectAll('.arrowhead').remove();
 
     svg.selectAll('.arrowhead')
-      .data(links)
+      .data(visibleLinks)
       .enter()
       .append('path')
       .attr('class', 'arrowhead')
       .attr('d', 'M0,-2L4,0L0,2');
 
     // Add detailed logging for link colors and coordinates
-    // links.forEach(link => {
+    // visibleLinks.forEach(link => {
     //   const sourceNode = nodeById.get(link.sourceId);
     //   const targetNode = nodeById.get(link.targetId);
     //   console.log(`Link from ${link.sourceId} to ${link.targetId}: color=${link.color}, coordinates=(${sourceNode.x}, ${sourceNode.y}) to (${targetNode.x}, ${targetNode.y})`);
@@ -288,7 +301,7 @@ async function visualizeNetwork() {
 
     // Log unique link colors and links without colors
     const uniqueColors = new Set();
-    links.forEach(link => {
+    visibleLinks.forEach(link => {
       if (link.color) {
         uniqueColors.add(link.color);
       } else {
@@ -301,7 +314,7 @@ async function visualizeNetwork() {
     nodeGroup.selectAll('.node')
       .on('mouseover', (event, hoveredNode) => {
         linkGroup.selectAll('line').attr('opacity', link => (link.sourceId === hoveredNode.id || link.targetId === hoveredNode.id) ? 1 : 0.1);
-        nodeGroup.selectAll('.node').attr('opacity', node => (node.id === hoveredNode.id || links.some(link => (link.sourceId === hoveredNode.id && link.targetId === node.id) || (link.targetId === hoveredNode.id && link.sourceId === node.id))) ? 1 : 0.1);
+        nodeGroup.selectAll('.node').attr('opacity', node => (node.id === hoveredNode.id || visibleLinks.some(link => (link.sourceId === hoveredNode.id && link.targetId === node.id) || (link.targetId === hoveredNode.id && link.sourceId === node.id))) ? 1 : 0.1);
       })
       .on('mouseout', () => {
         linkGroup.selectAll('line').attr('opacity', 1);
