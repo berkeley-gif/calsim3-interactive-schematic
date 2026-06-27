@@ -12,8 +12,8 @@ export function exportToCSV(nodes, links) {
   const linkCsvContent = [linkHeaders, ...linkRows].map(e => e.join(",")).join("\n");
 
   // Write nodes to CSV
-  fs.writeFileSync('nodes_data.csv', nodeCsvContent, 'utf8');
+  fs.writeFileSync('data/nodes_data.csv', nodeCsvContent, 'utf8');
 
   // Write links to CSV
-  fs.writeFileSync('links_data.csv', linkCsvContent, 'utf8');
+  fs.writeFileSync('data/links_data.csv', linkCsvContent, 'utf8');
 } 

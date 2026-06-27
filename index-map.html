@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CalSim3 Schematic - Geographic Map</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            background-color: #e8f4fd;
+        }
+        
+        h1 {
+            text-align: center;
+            margin: 10px 0;
+            padding: 0;
+            position: absolute;
+            top: 0;
+            width: 100%;
+            z-index: 10;
+            background-color: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            font-size: 24px;
+            color: #2c3e50;
+        }
+        
+        #network-container {
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        .status-message {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            border: 1px solid #ddd;
+        }
+        
+        .error-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 0, 0, 0.1);
+            color: darkred;
+            padding: 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            max-width: 80%;
+            border: 2px solid rgba(255, 0, 0, 0.3);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .zoom-controls {
+            position: absolute;
+            top: 70px;
+            left: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 10;
+        }
+
+        .zoom-controls button {
+            padding: 10px 15px;
+            font-size: 13px;
+            cursor: pointer;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            transition: all 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .zoom-controls button:hover {
+            background-color: #2980b9;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+        }
+
+        .legend {
+            position: absolute;
+            top: 70px;
+            right: 20px;
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 10;
+            min-width: 200px;
+            border: 1px solid #ddd;
+        }
+
+        .legend h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            color: #2c3e50;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            font-size: 12px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 3px;
+            margin-right: 8px;
+            border-radius: 2px;
+        }
+
+        .legend-node {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            border: 1px solid #333;
+        }
+
+        .tooltip {
+            max-width: 300px;
+            word-wrap: break-word;
+            z-index: 1000;
+        }
+
+        .info-panel {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 10;
+            font-size: 12px;
+            border: 1px solid #ddd;
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 20;
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Map-specific styles */
+        .node {
+            cursor: pointer;
+        }
+
+        .node:hover circle {
+            stroke-width: 3px;
+        }
+
+        .links line {
+            cursor: pointer;
+        }
+
+        .links line:hover {
+            stroke-width: 6px !important;
+            opacity: 1 !important;
+        }
+
+        /* California outline styling */
+        path {
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>CalSim3 Network - Geographic Visualization</h1>
+    
+    <!-- Legend -->
+    <div class="legend">
+        <h3>Legend</h3>
+        <div class="legend-section">
+            <strong>Arc Types:</strong>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #FF6B6B;"></div>
+                Type 1 - Primary
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #4ECDC4;"></div>
+                Type 2 - Secondary
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #45B7D1;"></div>
+                Type 3 - Tertiary
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #96CEB4;"></div>
+                Type 4 - Connection
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #FFEAA7;"></div>
+                Type 5 - Network Link
+            </div>
+        </div>
+        <div class="legend-section" style="margin-top: 15px;">
+            <strong>Node Types:</strong>
+            <div class="legend-item">
+                <div class="legend-node" style="background-color: #FFE5E5;"></div>
+                Treatment Plants
+            </div>
+            <div class="legend-item">
+                <div class="legend-node" style="background-color: #E5F9F6;"></div>
+                Reservoirs
+            </div>
+            <div class="legend-item">
+                <div class="legend-node" style="background-color: #E5F4FD;"></div>
+                Junctions
+            </div>
+            <div class="legend-item">
+                <div class="legend-node" style="background-color: #F0F8F0;"></div>
+                Sources
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading indicator -->
+    <div id="loading" class="loading" style="display: none;">
+        <div class="spinner"></div>
+        <p><strong>Loading Geographic Network Data...</strong></p>
+        <p style="font-size: 12px; color: #666;">Fetching nodes and arcs with geographic coordinates</p>
+    </div>
+    
+    <!-- Info Panel -->
+    <div class="info-panel">
+        <div><strong>Instructions:</strong></div>
+        <div>• Hover over nodes for details</div>
+        <div>• Use mouse wheel to zoom</div>
+        <div>• Drag to pan the map</div>
+        <div>• Toggle labels with button</div>
+    </div>
+    
+    <!-- Network visualization container -->
+    <div id="network-container"></div>
+    
+    <!-- Import the map-based network diagram script -->
+    <script type="module">
+        import { visualizeNetworkOnMap, API_CONFIG, MAP_CONFIG } from '/mapNetworkDiagram.js';
+        
+        // Show loading and start visualization
+        document.getElementById('loading').style.display = 'block';
+        
+        // You can modify API configuration here if needed
+        // API_CONFIG.baseUrl = 'http://your-api-server:port/api';
+        
+        // Load the map visualization
+        visualizeNetworkOnMap()
+            .finally(() => {
+                document.getElementById('loading').style.display = 'none';
+            });
+
+        // Add some helpful console information
+        console.log('Geographic Network Visualization');
+        console.log('API Configuration:', API_CONFIG);
+        console.log('Map Configuration:', MAP_CONFIG);
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            // You might want to re-render the map on resize
+            console.log('Window resized - consider re-rendering map');
+        });
+    </script>
+</body>
+</html>
+

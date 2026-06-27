@@ -1,0 +1,25 @@
+short_code,name,common_name,description,model_source_id,source_id,is_active
+CH-ST,channel - stream,channel,Natural stream or river channel connection,1,geopackage,true
+D-NA,delivery,delivery,Water delivery connection,1,geopackage,true
+RT-NA,return,return flow,Return flow connection,1,geopackage,true
+CH-CL,channel - canal,channel,Canal or constructed channel connection,1,geopackage,true
+IN-LI,inflow - link,inflow,Inflow connection link,1,geopackage,true
+SR-NA,source,source,Water source connection,1,geopackage,true
+D-CL,delivery - canal,delivery,Water delivery via canal connection,1,geopackage,true
+CH-BP,channel - bypass,channel,Channel bypass connection for flood control,1,geopackage,true
+CT-NA,control,control,Flow control connection,1,geopackage,true
+IN-IM,inflow - import,inflow,Imported inflow connection,1,geopackage,true
+D-PRP,delivery - pre-project,delivery,Pre-project water delivery connection,1,geopackage,true
+SP-NA,spill,spill,Spillway or overflow connection,1,geopackage,true
+CH-NA,channel,channel,General channel connection,1,geopackage,true
+D-ST,delivery - stream,delivery,Water delivery via stream connection,1,geopackage,true
+D-NS,delivery - non-simulated,delivery,Non-simulated delivery connection,1,geopackage,true
+CH-CH,channel - channel,channel,Channel to channel connection,1,geopackage,true
+RT-ST,return - stream,return flow,Return flow via stream connection,1,geopackage,true
+RT-NS,return - non-simulated,return flow,Non-simulated return flow connection,1,geopackage,true
+RT-CL,return - canal,return flow,Return flow via canal connection,1,geopackage,true
+D-HIS,delivery - historical,delivery,Historical delivery connection,1,geopackage,true
+CH-NS,channel - non-simulated,channel,Non-simulated channel connection,1,geopackage,true
+SP-ST,spill - stream,spill,Spillway to stream connection,1,geopackage,true
+SP-BP,spill - bypass,spill,Spillway to bypass connection,1,geopackage,true
+CH-Canal,channel - canal,channel,Channel to canal connection,1,geopackage,true

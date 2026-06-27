@@ -50,17 +50,6 @@ async function visualizeNetwork() {
 
     if (unlinkedNodes.length > 0) {
       console.warn('Nodes without links:', unlinkedNodes.map(node => node.id));
-
-      // Create a downloadable JSON file for unlinked nodes
-      const blob = new Blob([JSON.stringify(unlinkedNodes.map(node => node.id), null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-
-      const downloadLink = document.createElement('a');
-      downloadLink.href = url;
-      downloadLink.download = 'unlinkedNodes.json';
-      downloadLink.textContent = 'Download Unlinked Nodes JSON';
-      downloadLink.className = 'download-button';
-      document.body.appendChild(downloadLink);
     }
 
     // Check explicitly for links referencing nodes 147 and 148
@@ -314,7 +303,7 @@ async function visualizeNetwork() {
     function findUpstreamNodes(nodeId, links, visited = new Set()) {
       if (visited.has(nodeId)) return visited;
       visited.add(nodeId);
-      console.log(`Visiting upstream node: ${nodeId}`);
+      // console.log(`Visiting upstream node: ${nodeId}`);
       links.forEach(link => {
         if (link.targetId === nodeId) {
           findUpstreamNodes(link.sourceId, links, visited);
@@ -327,7 +316,7 @@ async function visualizeNetwork() {
     function findDownstreamNodes(nodeId, links, visited = new Set()) {
       if (visited.has(nodeId)) return visited;
       visited.add(nodeId);
-      console.log(`Visiting downstream node: ${nodeId}`);
+      // console.log(`Visiting downstream node: ${nodeId}`);
       links.forEach(link => {
         if (link.sourceId === nodeId) {
           findDownstreamNodes(link.targetId, links, visited);

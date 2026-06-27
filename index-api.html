@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CalSim3 Schematic - API Version</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            background-color: #f5f5f5;
+        }
+        
+        h1 {
+            text-align: center;
+            margin: 10px 0;
+            padding: 0;
+            position: absolute;
+            top: 0;
+            width: 100%;
+            z-index: 10;
+            background-color: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        #network-container {
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        .status-message {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .error-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 0, 0, 0.1);
+            color: darkred;
+            padding: 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            max-width: 80%;
+            border: 2px solid rgba(255, 0, 0, 0.3);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .zoom-controls {
+            position: absolute;
+            top: 60px;
+            left: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        .zoom-controls button {
+            padding: 10px 15px;
+            font-size: 14px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .zoom-controls button:hover {
+            background-color: #45a049;
+        }
+
+        .search-container {
+            z-index: 10;
+        }
+
+        .search-container input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .search-container button {
+            padding: 8px 12px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 5px;
+            font-size: 14px;
+        }
+
+        .search-container button:hover {
+            background-color: #da190b;
+        }
+
+        .tooltip {
+            max-width: 300px;
+            word-wrap: break-word;
+        }
+
+        .config-panel {
+            position: absolute;
+            top: 60px;
+            right: 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            z-index: 10;
+            min-width: 200px;
+        }
+
+        .config-panel h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+        }
+
+        .config-panel label {
+            display: block;
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+        .config-panel input {
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        .config-panel button {
+            width: 100%;
+            padding: 8px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .config-panel button:hover {
+            background-color: #1976D2;
+        }
+
+        /* Loading spinner */
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 20;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <h1>CalSim3 Schematic - Database API Version</h1>
+    
+    <!-- Configuration Panel -->
+    <div class="config-panel">
+        <h3>API Configuration</h3>
+        <label>
+            Base URL:
+            <input type="text" id="api-base-url" value="http://localhost:8000/api" placeholder="API base URL">
+        </label>
+        <label>
+            Nodes Endpoint:
+            <input type="text" id="nodes-endpoint" value="/network_node" placeholder="Nodes endpoint">
+        </label>
+        <label>
+            Arcs Endpoint:
+            <input type="text" id="arcs-endpoint" value="/network_arc" placeholder="Arcs endpoint">
+        </label>
+        <button id="reload-data">Reload Data</button>
+        <button id="toggle-config" style="background-color: #666; margin-top: 5px;">Hide Config</button>
+    </div>
+
+    <!-- Loading indicator -->
+    <div id="loading" class="loading" style="display: none;">
+        <div class="spinner"></div>
+        <p>Loading network data...</p>
+    </div>
+    
+    <!-- Network visualization container -->
+    <div id="network-container"></div>
+    
+    <!-- Import the API-based network diagram script -->
+    <script type="module">
+        import { visualizeNetworkFromAPI, API_CONFIG } from '/networkDiagramAPI.js';
+        
+        // Configuration panel functionality
+        document.getElementById('reload-data').addEventListener('click', () => {
+            // Update API configuration
+            API_CONFIG.baseUrl = document.getElementById('api-base-url').value;
+            API_CONFIG.endpoints.nodes = document.getElementById('nodes-endpoint').value;
+            API_CONFIG.endpoints.arcs = document.getElementById('arcs-endpoint').value;
+            
+            // Clear existing visualization
+            document.querySelector('#network-container').innerHTML = '';
+            
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            
+            // Reload data
+            visualizeNetworkFromAPI().finally(() => {
+                document.getElementById('loading').style.display = 'none';
+            });
+        });
+
+        // Toggle configuration panel
+        let configVisible = true;
+        document.getElementById('toggle-config').addEventListener('click', () => {
+            const panel = document.querySelector('.config-panel');
+            const button = document.getElementById('toggle-config');
+            
+            if (configVisible) {
+                panel.style.display = 'none';
+                button.textContent = 'Show Config';
+                button.style.position = 'absolute';
+                button.style.top = '60px';
+                button.style.right = '20px';
+                button.style.display = 'block';
+            } else {
+                panel.style.display = 'block';
+                button.textContent = 'Hide Config';
+                button.style.position = 'relative';
+            }
+            configVisible = !configVisible;
+        });
+
+        // Load initial data
+        document.getElementById('loading').style.display = 'block';
+        visualizeNetworkFromAPI().finally(() => {
+            document.getElementById('loading').style.display = 'none';
+        });
+    </script>
+</body>
+</html>
+
