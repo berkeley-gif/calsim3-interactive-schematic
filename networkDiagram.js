@@ -3,7 +3,7 @@ import * as d3 from 'd3';
 // Visualize the network schematic using D3
 async function visualizeNetwork() {
   try {
-    const response = await fetch('/data/json/networkSchematic.json');
+    const response = await fetch(`${import.meta.env.BASE_URL}data/json/networkSchematic.json`);
     const data = await response.json();
     
     /**

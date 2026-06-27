@@ -2,8 +2,8 @@ import { defineConfig } from "vite";
 import { resolve } from 'path';
 
 export default defineConfig({
-  // Base public path
-  base: '/',
+  // Base public path (matches the GitHub Pages project subpath)
+  base: '/calsim3-interactive-schematic/',
   
   // Configure server options
   server: {
