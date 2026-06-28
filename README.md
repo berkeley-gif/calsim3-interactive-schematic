@@ -4,6 +4,12 @@ An interactive, proof-of-concept visualization of the CalSim3 water network sche
 
 Built with [Vite](https://vitejs.dev/) and [D3 v7](https://d3js.org/). No framework.
 
+## Screenshot
+
+See what is upstream and downstream:
+
+![See what is upstream and downstream](docs/screenshots/upstream-downstream.png)
+
 ## Views
 
 The project ships three independent pages. Each is a separate Vite entry point that loads one ES module.
